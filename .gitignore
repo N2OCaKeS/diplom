@@ -1,2 +1,10 @@
+__pycache__/
+*.pyc
 .venv/
 .env
+pytestcache/
+.coverage
+htmlcov/
+app/static/out/raw/*
+app/static/out/normalized/*
+app/static/out/html/*
