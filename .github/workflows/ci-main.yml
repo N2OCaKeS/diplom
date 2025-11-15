@@ -101,16 +101,15 @@ jobs:
       - name: Detect test files
         id: detect
         shell: bash
-        working-directory: ${{ env.WORKDIR }}
         run: |
           shopt -s nullglob globstar
-          files=( ${matrix.pattern} )
-          if [[ ${#files[@]} -gt 0 ]]; then
-            echo "found=true" >> $GITHUB_OUTPUT
-            printf 'Detected %d files for pattern "%s"\n' "${#files[@]}" "${{ matrix.pattern }}"
+          # Надёжнее, чем голое расширение globs:
+          mapfile -t files < <(compgen -G "${{ matrix.pattern }}" || true)
+          echo "Matched: ${#files[@]}"
+          if (( ${#files[@]} > 0 )); then
+            echo "found=true" >> "$GITHUB_OUTPUT"
           else
-            echo "found=false" >> $GITHUB_OUTPUT
-            printf 'No files for pattern "%s" — skipping.\n' "${{ matrix.pattern }}"
+            echo "found=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Run pytest (${{ matrix.name }})
