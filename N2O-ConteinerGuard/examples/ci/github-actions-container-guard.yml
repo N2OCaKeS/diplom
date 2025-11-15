@@ -1,0 +1,55 @@
+name: ContainerGuard Evaluation
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  evaluate-image:
+    runs-on: ubuntu-latest
+    env:
+      CONTAINER_GUARD_URL: ${{ secrets.CONTAINER_GUARD_URL }}
+      CONTAINER_GUARD_TOKEN: ${{ secrets.CONTAINER_GUARD_TOKEN }}
+      CONTAINER_IMAGE: registry.example.com/project/app:${{ github.sha }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Trivy
+        uses: aquasecurity/trivy-action@0.20.0
+        with:
+          scan-type: image
+          image-ref: ${{ env.CONTAINER_IMAGE }}
+          format: json
+          output: trivy-report.json
+
+      - name: Evaluate vulnerabilities with ContainerGuard
+        env:
+          AUTH_TOKEN: ${{ env.CONTAINER_GUARD_TOKEN }}
+        run: |
+          REPORT=$(cat trivy-report.json)
+          jq -n \
+            --arg image "$CONTAINER_IMAGE" \
+            --arg commit "${GITHUB_SHA}" \
+            --arg project "${GITHUB_REPOSITORY}" \
+            --arg pipeline_id "${GITHUB_RUN_ID}" \
+            --argjson report "$REPORT" \
+            '{image: $image, commit: $commit, project: $project, pipeline_id: $pipeline_id, report: $report}' \
+            > payload.json
+
+          curl --fail-with-body \
+            --header "Content-Type: application/json" \
+            --header "Authorization: Bearer $AUTH_TOKEN" \
+            --data @payload.json \
+            "$CONTAINER_GUARD_URL/api/v1/evaluate" \
+            | tee guard-response.json
+
+      - name: Decide next steps
+        run: |
+          DECISION=$(jq -r '.decision' guard-response.json)
+          if [ "$DECISION" = "deny" ]; then
+            echo "Pipeline denied by ContainerGuard"
+            exit 1
+          fi
+          echo "Pipeline allowed"
