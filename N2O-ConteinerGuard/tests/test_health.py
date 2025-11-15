@@ -1,7 +1,8 @@
-from fastapi.testclient import TestClient
 from app.main import app
+from fastapi.testclient import TestClient
 
 client = TestClient(app)
+
 
 def test_health_ok():
     r = client.get("/api/health")
@@ -9,6 +10,7 @@ def test_health_ok():
     body = r.json()
     assert body["status"] == "ok"
     assert "ts" in body
+
 
 def test_version():
     r = client.get("/api/version")

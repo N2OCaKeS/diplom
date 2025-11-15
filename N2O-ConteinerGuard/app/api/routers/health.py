@@ -1,11 +1,14 @@
-from fastapi import APIRouter
 from datetime import datetime
 
+from fastapi import APIRouter
+
 router = APIRouter(tags=["health"])
+
 
 @router.get("/health")
 def health():
     return {"status": "ok", "ts": datetime.now().isoformat() + "Z"}
+
 
 @router.get("/version")
 def version():
