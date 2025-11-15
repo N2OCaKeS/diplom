@@ -24,6 +24,13 @@ dependencies = [
 [tool.poetry]
 package-mode = false
 
+[tool.ruff]
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+per-file-ignores = { "__init__.py" = ["F401"] }
+
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
