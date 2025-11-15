@@ -12,6 +12,7 @@ permissions:
 env:
   WORKDIR: N2O-ConteinerGuard
   PY_VER: "3.12"
+  POETRY_VER: "2.2.1"
   IMAGE_LOCAL: app:ci-${{ github.sha }}
   IMAGE_REMOTE: ghcr.io/${{ github.repository }}/app
 
@@ -27,7 +28,7 @@ jobs:
 
       - uses: snok/install-poetry@v1
         with:
-          version: 1.8.4
+          version: ${{ env.POETRY_VER }}
           virtualenvs-in-project: true
           installer-parallel: true
 
@@ -42,7 +43,9 @@ jobs:
 
       - name: Install deps
         working-directory: ${{ env.WORKDIR }}
-        run: poetry install --no-interaction --no-root
+        run: |
+          poetry --version
+          poetry install --no-interaction --no-root --sync
 
       - name: Ruff
         working-directory: ${{ env.WORKDIR }}
@@ -62,7 +65,7 @@ jobs:
 
       - uses: snok/install-poetry@v1
         with:
-          version: 1.8.4
+          version: ${{ env.POETRY_VER }}
           virtualenvs-in-project: true
           installer-parallel: true
 
@@ -77,7 +80,9 @@ jobs:
 
       - name: Install deps
         working-directory: ${{ env.WORKDIR }}
-        run: poetry install --no-interaction --no-root
+        run: |
+          poetry --version
+          poetry install --no-interaction --no-root --sync
 
       - name: Pytest
         working-directory: ${{ env.WORKDIR }}
