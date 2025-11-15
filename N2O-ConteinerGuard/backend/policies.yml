@@ -1,0 +1,10 @@
+default:
+  block_on_severity: CRITICAL
+  warn_on_severity: HIGH
+  allow_unfixed: false
+  treat_unknown_as: HIGH
+
+projects:
+  example-service:
+    block_on_severity: HIGH
+    warn_on_severity: MEDIUM
