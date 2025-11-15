@@ -93,7 +93,7 @@ jobs:
           if [ -d tests/unit ]; then
             poetry run pytest -q tests/unit
           else
-            poetry run pytest -q tests
+            poetry run pytest -q
           fi
 
   test-integration:
