@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-import os
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
 import yaml
 from pydantic import BaseModel, Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class PolicySettings(BaseModel):
@@ -42,18 +42,15 @@ class PolicyConfig(BaseModel):
         return self.default
 
 
-class Settings(BaseModel):
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="allow")
+
     auth_mode: str = Field(default="none")
-    jwt_secret: str | None = Field(default=None)
-    jwt_algorithm: str = Field(default="HS256")
-    jwt_audience: str | None = Field(default=None)
-    jwt_issuer: str | None = Field(default=None)
-    auth_validation_url: str | None = Field(default=None)
+    guard_token: str | None = Field(default=None)
 
     database_url: str = Field(default="postgresql+asyncpg://postgres:postgres@postgres:5432/guard")
 
     jira_url: str | None = None
-    jira_browse_url: str | None = None
     jira_user: str | None = None
     jira_api_token: str | None = None
     jira_project_key: str | None = None
@@ -64,8 +61,6 @@ class Settings(BaseModel):
 
     def model_post_init(self, __context: Any) -> None:
         self.policies = self._load_policies()
-        if not self.jira_browse_url and self.jira_url:
-            self.jira_browse_url = self.jira_url.rstrip("/")
 
     def _load_policies(self) -> PolicyConfig:
         if not self.policies_path.exists():
@@ -74,16 +69,7 @@ class Settings(BaseModel):
             data = yaml.safe_load(file) or {}
         return PolicyConfig.from_dict(data)
 
-    @classmethod
-    def from_env(cls) -> "Settings":
-        data: dict[str, Any] = {}
-        for field in cls.model_fields:
-            env_key = field.upper()
-            if env_key in os.environ:
-                data[field] = os.environ[env_key]
-        return cls(**data)
-
 
 @lru_cache
 def get_settings() -> Settings:
-    return Settings.from_env()
+    return Settings()

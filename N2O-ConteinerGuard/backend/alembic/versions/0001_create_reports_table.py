@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-import sqlalchemy as sa
 from alembic import op
+import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
 
 revision = "0001_create_reports_table"
 down_revision = None
@@ -12,7 +13,7 @@ depends_on = None
 def upgrade() -> None:
     op.create_table(
         "reports",
-        sa.Column("id", sa.String(length=36), nullable=False),
+        sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("image", sa.String(length=255), nullable=False),
         sa.Column("commit", sa.String(length=128), nullable=False),
         sa.Column("project", sa.String(length=128), nullable=False),
@@ -20,10 +21,10 @@ def upgrade() -> None:
         sa.Column("decision", sa.Enum("allow", "deny", name="decision"), nullable=False),
         sa.Column("status", sa.Enum("pass", "warn", "medium", "high", name="status"), nullable=False),
         sa.Column("message", sa.String(length=512), nullable=False),
-        sa.Column("report", sa.JSON(), nullable=False),
+        sa.Column("report", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
         sa.Column("jira_issue_key", sa.String(length=64), nullable=False),
         sa.Column("recommendations_url", sa.String(length=512), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+        sa.Column("created_at", sa.DateTime(), nullable=False),
         sa.PrimaryKeyConstraint("id"),
     )
 

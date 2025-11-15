@@ -56,9 +56,6 @@ class Analyzer:
 
         highest_severity = self._determine_highest_severity(vulnerabilities, policy)
 
-        if self._has_blocking_unfixed(vulnerabilities, policy):
-            return Status.HIGH, Decision.DENY, "Blocking vulnerabilities without fixes detected"
-
         if self._severity_meets_threshold(highest_severity, policy.block_on_severity):
             return Status.HIGH, Decision.DENY, "Blocking vulnerability threshold reached"
 
@@ -66,15 +63,6 @@ class Analyzer:
             return Status.MEDIUM, Decision.ALLOW, "Vulnerabilities require attention"
 
         return Status.WARN, Decision.ALLOW, "Low severity vulnerabilities present"
-
-    def _has_blocking_unfixed(self, vulnerabilities: list[Vulnerability], policy: PolicySettings) -> bool:
-        if policy.allow_unfixed:
-            return False
-        for vulnerability in vulnerabilities:
-            severity = vulnerability.severity or "UNKNOWN"
-            if not vulnerability.fixed_version and self._severity_meets_threshold(severity, policy.block_on_severity):
-                return True
-        return False
 
     def _determine_highest_severity(self, vulnerabilities: list[Vulnerability], policy: PolicySettings) -> str:
         highest = "UNKNOWN"
