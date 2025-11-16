@@ -79,4 +79,6 @@ jobs:
 
       - name: Run pytest
         working-directory: ${{ env.WORKDIR }}
-        run: poetry run pytest backend/tests -q
+        run: |
+          export PYTHONPATH="$PYTHONPATH:$(pwd)"
+          poetry run pytest backend/tests -q
