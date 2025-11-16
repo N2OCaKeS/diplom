@@ -6,15 +6,19 @@
     "configurations": [
 
         {
-            "name": "Отладчик Python: FastAPI",
+            "name": "App",
             "type": "debugpy",
             "request": "launch",
             "module": "uvicorn",
             "args": [
-                "main:app",
+                "backend.app.main:app",
+                "--host", "0.0.0.0",
+                "--port",
+                "8001",
                 "--reload"
             ],
-            "jinja": true
+            "jinja": true,
+            "cwd": "${workspaceFolder}/N2O-ConteinerGuard"
         }
     ]
 }

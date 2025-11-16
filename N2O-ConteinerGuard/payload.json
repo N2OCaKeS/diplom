@@ -1,0 +1,26 @@
+{
+  "fields": {
+    "project": {
+      "key": "SEC"
+    },
+    "summary": "Test issue from curl",
+    "issuetype": {
+      "name": "Task"
+    },
+    "description": {
+      "type": "doc",
+      "version": 1,
+      "content": [
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Моё описание задачи, отправленное через curl"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

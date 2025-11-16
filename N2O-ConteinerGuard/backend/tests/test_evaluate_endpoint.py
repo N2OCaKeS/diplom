@@ -80,7 +80,7 @@ def test_evaluate_denies_on_blocking(
 def test_evaluate_requires_jira_configuration(
     monkeypatch: pytest.MonkeyPatch, client
 ) -> None:
-    monkeypatch.delenv("JIRA_BROWSE_URL", raising=False)
+    monkeypatch.setenv("JIRA_BROWSE_URL", "")
     monkeypatch.setenv("AUTH_MODE", "token")
     monkeypatch.setenv("GUARD_TOKEN", "secret")
 

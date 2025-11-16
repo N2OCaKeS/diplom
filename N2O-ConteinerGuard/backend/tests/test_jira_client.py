@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 import httpx
 import pytest
 
@@ -10,6 +12,10 @@ from backend.app.integrations.jira_client import DummyJiraClient, JiraClient
 async def test_jira_client_creates_issue() -> None:
     def handler(request: httpx.Request) -> httpx.Response:
         assert request.url.path == "/rest/api/3/issue"
+        payload = json.loads(request.content.decode())
+        description = payload["fields"]["description"]
+        assert description["type"] == "doc"
+        assert description["version"] == 1
         return httpx.Response(201, json={"key": "SEC-123"}, request=request)
 
     transport = httpx.MockTransport(handler)

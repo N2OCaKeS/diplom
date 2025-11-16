@@ -32,7 +32,7 @@ class JiraClient:
             "fields": {
                 "project": {"key": self.project_key},
                 "summary": summary,
-                "description": description,
+                "description": self._format_description(description),
                 "issuetype": {"name": "Task"},
             }
         }
@@ -45,6 +45,27 @@ class JiraClient:
 
     async def close(self) -> None:
         await self._client.aclose()
+
+    def _format_description(self, text: str) -> dict[str, Any]:
+        """Convert a plain text description into Atlassian Document Format."""
+        paragraphs: list[dict[str, Any]] = []
+        for paragraph in text.split("\n\n"):
+            content: list[dict[str, Any]] = []
+            lines = paragraph.split("\n")
+            for idx, line in enumerate(lines):
+                content.append({"type": "text", "text": line})
+                if idx < len(lines) - 1:
+                    content.append({"type": "hardBreak"})
+            if not content:
+                content.append({"type": "text", "text": ""})
+            paragraphs.append({"type": "paragraph", "content": content})
+
+        if not paragraphs:
+            paragraphs.append(
+                {"type": "paragraph", "content": [{"type": "text", "text": ""}]}
+            )
+
+        return {"type": "doc", "version": 1, "content": paragraphs}
 
     @classmethod
     def from_settings(cls, settings: Settings | None = None) -> "JiraClient":
