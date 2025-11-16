@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import jwt
 import pytest
 from sqlalchemy import select
 
@@ -30,17 +29,20 @@ def build_payload(severity: str, fixed_version: str | None = "1.0.0") -> dict:
     }
 
 
+def auth_headers(token: str = "secret") -> dict[str, str]:
+    return {"X-Auth-Token": token}
+
+
 def test_evaluate_allows_deployment(
     monkeypatch: pytest.MonkeyPatch, client, session
 ) -> None:
-    monkeypatch.setenv("AUTH_MODE", "jwt_static")
-    monkeypatch.setenv("JWT_SECRET", "secret")
-    token = jwt.encode({"sub": "ci"}, "secret", algorithm="HS256")
+    monkeypatch.setenv("AUTH_MODE", "token")
+    monkeypatch.setenv("GUARD_TOKEN", "secret")
 
     response = client.post(
         "/api/v1/evaluate",
         json=build_payload("LOW"),
-        headers={"Authorization": f"Bearer {token}"},
+        headers=auth_headers(),
     )
 
     assert response.status_code == 200
@@ -59,14 +61,13 @@ def test_evaluate_allows_deployment(
 def test_evaluate_denies_on_blocking(
     monkeypatch: pytest.MonkeyPatch, client, session
 ) -> None:
-    monkeypatch.setenv("AUTH_MODE", "jwt_static")
-    monkeypatch.setenv("JWT_SECRET", "secret")
-    token = jwt.encode({"sub": "ci"}, "secret", algorithm="HS256")
+    monkeypatch.setenv("AUTH_MODE", "token")
+    monkeypatch.setenv("GUARD_TOKEN", "secret")
 
     response = client.post(
         "/api/v1/evaluate",
         json=build_payload("CRITICAL", fixed_version=None),
-        headers={"Authorization": f"Bearer {token}"},
+        headers=auth_headers(),
     )
 
     assert response.status_code == 200
@@ -80,14 +81,13 @@ def test_evaluate_requires_jira_configuration(
     monkeypatch: pytest.MonkeyPatch, client
 ) -> None:
     monkeypatch.delenv("JIRA_BROWSE_URL", raising=False)
-    monkeypatch.setenv("AUTH_MODE", "jwt_static")
-    monkeypatch.setenv("JWT_SECRET", "secret")
-    token = jwt.encode({"sub": "ci"}, "secret", algorithm="HS256")
+    monkeypatch.setenv("AUTH_MODE", "token")
+    monkeypatch.setenv("GUARD_TOKEN", "secret")
 
     response = client.post(
         "/api/v1/evaluate",
         json=build_payload("LOW"),
-        headers={"Authorization": f"Bearer {token}"},
+        headers=auth_headers(),
     )
 
     assert response.status_code == 500

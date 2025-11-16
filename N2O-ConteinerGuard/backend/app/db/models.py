@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import JSON, Column, DateTime, Enum, String
 from sqlalchemy.dialects.postgresql import UUID
@@ -24,4 +24,8 @@ class ReportORM(Base):
     report = Column(JSON, nullable=False)
     jira_issue_key = Column(String(64), nullable=False)
     recommendations_url = Column(String(512), nullable=False)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+    )

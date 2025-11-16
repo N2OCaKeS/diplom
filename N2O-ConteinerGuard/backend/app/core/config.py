@@ -31,8 +31,7 @@ class PolicyConfig(BaseModel):
         projects_data = data.get("projects", {})
         default = PolicySettings(**default_data)
         projects = {
-            name: PolicySettings(**values)
-            for name, values in projects_data.items()
+            name: PolicySettings(**values) for name, values in projects_data.items()
         }
         return cls(default=default, projects=projects)
 
@@ -43,17 +42,22 @@ class PolicyConfig(BaseModel):
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="allow")
+    model_config = SettingsConfigDict(
+        env_file=".env", env_file_encoding="utf-8", extra="allow"
+    )
 
     auth_mode: str = Field(default="none")
     guard_token: str | None = Field(default=None)
 
-    database_url: str = Field(default="postgresql+asyncpg://postgres:postgres@postgres:5432/guard")
+    database_url: str = Field(
+        default="postgresql+asyncpg://postgres:postgres@postgres:5432/guard"
+    )
 
     jira_url: str | None = None
     jira_user: str | None = None
     jira_api_token: str | None = None
     jira_project_key: str | None = None
+    jira_browse_url: str | None = None
 
     policies_path: Path = Field(default=Path("policies.yml"))
 

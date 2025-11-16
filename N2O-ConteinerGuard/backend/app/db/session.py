@@ -14,3 +14,8 @@ SessionFactory = async_sessionmaker(engine, expire_on_commit=False, class_=Async
 async def get_session() -> AsyncIterator[AsyncSession]:
     async with SessionFactory() as session:
         yield session
+
+
+def dispose_engine() -> None:
+    """Dispose database engine, used in tests to close connections."""
+    engine.sync_engine.dispose()

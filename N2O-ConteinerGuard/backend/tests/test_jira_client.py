@@ -13,7 +13,9 @@ async def test_jira_client_creates_issue() -> None:
         return httpx.Response(201, json={"key": "SEC-123"}, request=request)
 
     transport = httpx.MockTransport(handler)
-    http_client = httpx.Client(transport=transport, base_url="https://jira.example.com")
+    http_client = httpx.AsyncClient(
+        transport=transport, base_url="https://jira.example.com"
+    )
     client = JiraClient(
         base_url="https://jira.example.com",
         user="user",
@@ -22,13 +24,14 @@ async def test_jira_client_creates_issue() -> None:
         browse_url="https://jira.example.com",
         client=http_client,
     )
-    issue = client.create_issue("summary", "description")
+    issue = await client.create_issue("summary", "description")
     assert issue.key == "SEC-123"
     assert issue.url == "https://jira.example.com/browse/SEC-123"
-    client.close()
+    await client.close()
 
 
-def test_dummy_jira_client_uses_configured_browse_url() -> None:
+@pytest.mark.asyncio
+async def test_dummy_jira_client_uses_configured_browse_url() -> None:
     client = DummyJiraClient(browse_url="https://jira.example.com")
-    issue = client.create_issue("summary", "description")
+    issue = await client.create_issue("summary", "description")
     assert issue.url == "https://jira.example.com/browse/SEC-000"

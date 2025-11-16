@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 
 from backend.app.db.models import ReportORM
 from backend.app.domain.models import AnalysisResult, EvaluationRequest
 
 
 class ReportRepository:
-    def __init__(self, session: AsyncSession) -> None:
+    def __init__(self, session: AsyncSession | Session) -> None:
         self._session = session
 
     async def create_report(
@@ -30,6 +31,10 @@ class ReportRepository:
             recommendations_url=recommendations_url,
         )
         self._session.add(report)
-        await self._session.commit()
-        await self._session.refresh(report)
+        if isinstance(self._session, AsyncSession):
+            await self._session.commit()
+            await self._session.refresh(report)
+        else:
+            self._session.commit()
+            self._session.refresh(report)
         return report

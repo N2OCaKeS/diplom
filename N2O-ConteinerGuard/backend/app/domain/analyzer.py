@@ -58,6 +58,13 @@ class Analyzer:
         if not vulnerabilities:
             return Status.PASS, Decision.ALLOW, "No vulnerabilities detected"
 
+        if not policy.allow_unfixed and self._contains_unfixed(vulnerabilities):
+            return (
+                Status.HIGH,
+                Decision.DENY,
+                "Blocking vulnerabilities without fixes detected",
+            )
+
         highest_severity = self._determine_highest_severity(vulnerabilities, policy)
 
         if self._severity_meets_threshold(highest_severity, policy.block_on_severity):
@@ -89,3 +96,6 @@ class Analyzer:
 
     def _severity_meets_threshold(self, severity: str, threshold: str) -> bool:
         return self._severity_rank(severity) >= self._severity_rank(threshold)
+
+    def _contains_unfixed(self, vulnerabilities: list[Vulnerability]) -> bool:
+        return any(not vulnerability.fixed_version for vulnerability in vulnerabilities)

@@ -26,11 +26,21 @@ async def evaluate_image(
     session: AsyncSession = Depends(get_session),
 ) -> EvaluationResponse:
     settings = get_settings()
+    if not settings.jira_browse_url:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Jira browse URL must be configured",
+        )
 
     analyzer = Analyzer(settings.policies)
     analysis: AnalysisResult = analyzer.evaluate(payload.project, payload.report)
 
-    jira_client = JiraClient.from_settings(settings)
+    try:
+        jira_client = JiraClient.from_settings(settings)
+    except ValueError as exc:  # pragma: no cover
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)
+        ) from exc
     jira_description = build_jira_description(payload, analysis)
 
     try:

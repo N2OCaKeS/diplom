@@ -10,12 +10,12 @@ from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
+ROOT_PATH = Path(__file__).resolve().parents[1]
+
 from backend.app.core.config import get_settings
 from backend.app.db.base import Base
 from backend.app.db.session import dispose_engine, get_session
 from backend.app.main import app as fastapi_app
-
-ROOT_PATH = Path(__file__).resolve().parents[1]
 
 TEST_DB_PATH = ROOT_PATH / "test_container_guard.db"
 TEST_DATABASE_URL = f"sqlite:///{TEST_DB_PATH}"
@@ -26,6 +26,7 @@ def clear_settings_cache(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
     monkeypatch.setenv("JIRA_BROWSE_URL", "https://jira.test")
     monkeypatch.setenv("DATABASE_URL", TEST_DATABASE_URL)
     monkeypatch.delenv("AUTH_MODE", raising=False)
+    monkeypatch.delenv("GUARD_TOKEN", raising=False)
     monkeypatch.delenv("JWT_SECRET", raising=False)
     monkeypatch.delenv("AUTH_VALIDATION_URL", raising=False)
     get_settings.cache_clear()
