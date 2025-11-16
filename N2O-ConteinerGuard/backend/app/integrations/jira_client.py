@@ -70,25 +70,24 @@ class JiraClient:
     @classmethod
     def from_settings(cls, settings: Settings | None = None) -> "JiraClient":
         settings = settings or get_settings()
-        browse_url = settings.jira_browse_url
-        if not browse_url:
-            raise ValueError("Jira browse URL must be configured")
+        base_url = settings.jira_url
+        if not base_url:
+            raise ValueError("Jira URL must be configured")
         if not all(
             [
-                settings.jira_url,
                 settings.jira_user,
                 settings.jira_api_token,
                 settings.jira_project_key,
             ]
         ):
             # Return a dummy client that mimics Jira responses without network calls.
-            return DummyJiraClient(browse_url=browse_url)
+            return DummyJiraClient(browse_url=base_url)
         return cls(
-            base_url=settings.jira_url,
+            base_url=base_url,
             user=settings.jira_user,
             api_token=settings.jira_api_token,
             project_key=settings.jira_project_key,
-            browse_url=browse_url,
+            browse_url=base_url,
         )
 
 

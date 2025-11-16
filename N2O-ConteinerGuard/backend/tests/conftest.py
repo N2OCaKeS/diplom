@@ -23,8 +23,7 @@ TEST_DATABASE_URL = f"sqlite:///{TEST_DB_PATH}"
 
 @pytest.fixture(autouse=True)
 def clear_settings_cache(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
-    monkeypatch.setenv("JIRA_BROWSE_URL", "https://jira.test")
-    monkeypatch.setenv("JIRA_URL", "")
+    monkeypatch.setenv("JIRA_URL", "https://jira.test")
     monkeypatch.setenv("JIRA_USER", "")
     monkeypatch.setenv("JIRA_API_TOKEN", "")
     monkeypatch.setenv("JIRA_PROJECT_KEY", "")

@@ -80,7 +80,7 @@ def test_evaluate_denies_on_blocking(
 def test_evaluate_requires_jira_configuration(
     monkeypatch: pytest.MonkeyPatch, client
 ) -> None:
-    monkeypatch.setenv("JIRA_BROWSE_URL", "")
+    monkeypatch.setenv("JIRA_URL", "")
     monkeypatch.setenv("AUTH_MODE", "token")
     monkeypatch.setenv("GUARD_TOKEN", "secret")
 
@@ -91,4 +91,4 @@ def test_evaluate_requires_jira_configuration(
     )
 
     assert response.status_code == 500
-    assert response.json()["detail"] == "Jira browse URL must be configured"
+    assert response.json()["detail"] == "Jira URL must be configured"

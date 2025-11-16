@@ -26,10 +26,10 @@ async def evaluate_image(
     session: AsyncSession = Depends(get_session),
 ) -> EvaluationResponse:
     settings = get_settings()
-    if not settings.jira_browse_url:
+    if not settings.jira_url:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Jira browse URL must be configured",
+            detail="Jira URL must be configured",
         )
 
     analyzer = Analyzer(settings.policies)

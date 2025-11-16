@@ -32,6 +32,7 @@ WORKDIR /app
 COPY --from=builder /usr/local /usr/local
 COPY backend ./backend
 COPY backend/policies.yml ./policies.yml
+COPY guincorn.py ./guincorn.py
 
 EXPOSE 8001
-CMD ["uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8001"]
+CMD ["gunicorn", "-c", "guincorn.py"]

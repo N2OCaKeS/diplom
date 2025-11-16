@@ -57,7 +57,6 @@ class Settings(BaseSettings):
     jira_user: str | None = None
     jira_api_token: str | None = None
     jira_project_key: str | None = None
-    jira_browse_url: str | None = None
 
     policies_path: Path = Field(default=Path("policies.yml"))
 

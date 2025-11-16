@@ -28,8 +28,7 @@ def test_settings_load_policies_from_custom_file(tmp_path, monkeypatch) -> None:
 
 
 def test_jira_client_from_settings_returns_dummy(monkeypatch) -> None:
-    monkeypatch.setenv("JIRA_BROWSE_URL", "https://jira.test")
-    monkeypatch.setenv("JIRA_URL", "")
+    monkeypatch.setenv("JIRA_URL", "https://jira.test")
     monkeypatch.setenv("JIRA_USER", "")
     monkeypatch.setenv("JIRA_API_TOKEN", "")
     monkeypatch.setenv("JIRA_PROJECT_KEY", "")
@@ -42,7 +41,6 @@ def test_jira_client_from_settings_returns_dummy(monkeypatch) -> None:
 
 @pytest.mark.asyncio
 async def test_jira_client_from_settings_builds_real_client(monkeypatch) -> None:
-    monkeypatch.setenv("JIRA_BROWSE_URL", "https://jira.test")
     monkeypatch.setenv("JIRA_URL", "https://jira.api")
     monkeypatch.setenv("JIRA_USER", "api-user")
     monkeypatch.setenv("JIRA_API_TOKEN", "token")
@@ -59,8 +57,8 @@ async def test_jira_client_from_settings_builds_real_client(monkeypatch) -> None
         await client.close()
 
 
-def test_jira_client_from_settings_requires_browse_url(monkeypatch) -> None:
-    monkeypatch.setenv("JIRA_BROWSE_URL", "")
+def test_jira_client_from_settings_requires_jira_url(monkeypatch) -> None:
+    monkeypatch.setenv("JIRA_URL", "")
     get_settings.cache_clear()
 
     with pytest.raises(ValueError):
