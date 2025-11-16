@@ -7,7 +7,7 @@ import pytest
 from fastapi import HTTPException
 from starlette.requests import Request
 
-from app.core.security import get_security_dependency
+from backend.app.core.security import get_security_dependency
 
 
 def make_request(token: str | None = None) -> Request:
@@ -65,7 +65,9 @@ class DummyAuthClient:
         self.response_status = response_status
 
     def post(self, url: str, headers: dict[str, str]) -> httpx.Response:  # noqa: ARG002
-        return httpx.Response(status_code=self.response_status, request=httpx.Request("POST", url))
+        return httpx.Response(
+            status_code=self.response_status, request=httpx.Request("POST", url)
+        )
 
     def close(self) -> None:
         return None
@@ -74,7 +76,9 @@ class DummyAuthClient:
 def test_security_validates_external_token(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("AUTH_MODE", "jwt_external")
     monkeypatch.setenv("AUTH_VALIDATION_URL", "https://auth/validate")
-    dependency = get_security_dependency(http_client_factory=lambda: DummyAuthClient(response_status=200))
+    dependency = get_security_dependency(
+        http_client_factory=lambda: DummyAuthClient(response_status=200)
+    )
 
     asyncio.run(dependency(make_request("token")))
 
@@ -82,7 +86,9 @@ def test_security_validates_external_token(monkeypatch: pytest.MonkeyPatch) -> N
 def test_security_external_rejects_token(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("AUTH_MODE", "jwt_external")
     monkeypatch.setenv("AUTH_VALIDATION_URL", "https://auth/validate")
-    dependency = get_security_dependency(http_client_factory=lambda: DummyAuthClient(response_status=401))
+    dependency = get_security_dependency(
+        http_client_factory=lambda: DummyAuthClient(response_status=401)
+    )
 
     with pytest.raises(HTTPException) as exc_info:
         asyncio.run(dependency(make_request("token")))
@@ -90,10 +96,14 @@ def test_security_external_rejects_token(monkeypatch: pytest.MonkeyPatch) -> Non
     assert exc_info.value.status_code == 401
 
 
-def test_security_external_handles_service_failure(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_security_external_handles_service_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setenv("AUTH_MODE", "jwt_external")
     monkeypatch.setenv("AUTH_VALIDATION_URL", "https://auth/validate")
-    dependency = get_security_dependency(http_client_factory=lambda: DummyAuthClient(response_status=500))
+    dependency = get_security_dependency(
+        http_client_factory=lambda: DummyAuthClient(response_status=500)
+    )
 
     with pytest.raises(HTTPException) as exc_info:
         asyncio.run(dependency(make_request("token")))

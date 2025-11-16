@@ -4,7 +4,7 @@ import jwt
 import pytest
 from sqlalchemy import select
 
-from app.db.models import ReportORM
+from backend.app.db.models import ReportORM
 
 
 def build_payload(severity: str, fixed_version: str | None = "1.0.0") -> dict:
@@ -30,7 +30,9 @@ def build_payload(severity: str, fixed_version: str | None = "1.0.0") -> dict:
     }
 
 
-def test_evaluate_allows_deployment(monkeypatch: pytest.MonkeyPatch, client, session) -> None:
+def test_evaluate_allows_deployment(
+    monkeypatch: pytest.MonkeyPatch, client, session
+) -> None:
     monkeypatch.setenv("AUTH_MODE", "jwt_static")
     monkeypatch.setenv("JWT_SECRET", "secret")
     token = jwt.encode({"sub": "ci"}, "secret", algorithm="HS256")
@@ -54,7 +56,9 @@ def test_evaluate_allows_deployment(monkeypatch: pytest.MonkeyPatch, client, ses
     assert stored.image == "registry.example.com/project/app:sha"
 
 
-def test_evaluate_denies_on_blocking(monkeypatch: pytest.MonkeyPatch, client, session) -> None:
+def test_evaluate_denies_on_blocking(
+    monkeypatch: pytest.MonkeyPatch, client, session
+) -> None:
     monkeypatch.setenv("AUTH_MODE", "jwt_static")
     monkeypatch.setenv("JWT_SECRET", "secret")
     token = jwt.encode({"sub": "ci"}, "secret", algorithm="HS256")
@@ -72,7 +76,9 @@ def test_evaluate_denies_on_blocking(monkeypatch: pytest.MonkeyPatch, client, se
     assert data["message"] == "Blocking vulnerabilities without fixes detected"
 
 
-def test_evaluate_requires_jira_configuration(monkeypatch: pytest.MonkeyPatch, client) -> None:
+def test_evaluate_requires_jira_configuration(
+    monkeypatch: pytest.MonkeyPatch, client
+) -> None:
     monkeypatch.delenv("JIRA_BROWSE_URL", raising=False)
     monkeypatch.setenv("AUTH_MODE", "jwt_static")
     monkeypatch.setenv("JWT_SECRET", "secret")

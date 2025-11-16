@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models import ReportORM
-from app.domain.models import AnalysisResult, EvaluationRequest
+from backend.app.db.models import ReportORM
+from backend.app.domain.models import AnalysisResult, EvaluationRequest
 
 
 class ReportRepository:

@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import Any, Iterable
 
-from app.core.config import PolicyConfig, PolicySettings
-from app.domain.models import AnalysisResult, Decision, Status, Vulnerability
+from backend.app.core.config import PolicyConfig, PolicySettings
+from backend.app.domain.models import AnalysisResult, Decision, Status, Vulnerability
 
 SEVERITY_RANKING = {
     "UNKNOWN": 0,
@@ -31,16 +31,20 @@ class Analyzer:
             vulnerabilities=vulnerabilities,
         )
 
-    def _extract_vulnerabilities(self, report: dict[str, Any]) -> Iterable[Vulnerability]:
+    def _extract_vulnerabilities(
+        self, report: dict[str, Any]
+    ) -> Iterable[Vulnerability]:
         results = report.get("Results", [])
         for result in results:
             for vulnerability in result.get("Vulnerabilities", []) or []:
                 yield Vulnerability(
-                    id=vulnerability.get("VulnerabilityID") or vulnerability.get("ID", "unknown"),
+                    id=vulnerability.get("VulnerabilityID")
+                    or vulnerability.get("ID", "unknown"),
                     severity=(vulnerability.get("Severity") or "UNKNOWN").upper(),
                     title=vulnerability.get("Title"),
                     description=vulnerability.get("Description"),
-                    recommendation=vulnerability.get("PrimaryURL") or vulnerability.get("Recommendation"),
+                    recommendation=vulnerability.get("PrimaryURL")
+                    or vulnerability.get("Recommendation"),
                     url=vulnerability.get("PrimaryURL"),
                     fixed_version=vulnerability.get("FixedVersion"),
                     package=vulnerability.get("PkgName"),
@@ -57,14 +61,20 @@ class Analyzer:
         highest_severity = self._determine_highest_severity(vulnerabilities, policy)
 
         if self._severity_meets_threshold(highest_severity, policy.block_on_severity):
-            return Status.HIGH, Decision.DENY, "Blocking vulnerability threshold reached"
+            return (
+                Status.HIGH,
+                Decision.DENY,
+                "Blocking vulnerability threshold reached",
+            )
 
         if self._severity_meets_threshold(highest_severity, policy.warn_on_severity):
             return Status.MEDIUM, Decision.ALLOW, "Vulnerabilities require attention"
 
         return Status.WARN, Decision.ALLOW, "Low severity vulnerabilities present"
 
-    def _determine_highest_severity(self, vulnerabilities: list[Vulnerability], policy: PolicySettings) -> str:
+    def _determine_highest_severity(
+        self, vulnerabilities: list[Vulnerability], policy: PolicySettings
+    ) -> str:
         highest = "UNKNOWN"
         for vulnerability in vulnerabilities:
             severity = vulnerability.severity or "UNKNOWN"

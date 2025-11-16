@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import os
-import sys
 from collections.abc import Iterator
 from pathlib import Path
 
@@ -12,14 +10,12 @@ from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
-ROOT_PATH = Path(__file__).resolve().parents[1]
-if str(ROOT_PATH) not in sys.path:
-    sys.path.insert(0, str(ROOT_PATH))
+from backend.app.core.config import get_settings
+from backend.app.db.base import Base
+from backend.app.db.session import dispose_engine, get_session
+from backend.app.main import app as fastapi_app
 
-from app.core.config import get_settings
-from app.db.base import Base
-from app.db.session import dispose_engine, get_session
-from app.main import app as fastapi_app
+ROOT_PATH = Path(__file__).resolve().parents[1]
 
 TEST_DB_PATH = ROOT_PATH / "test_container_guard.db"
 TEST_DATABASE_URL = f"sqlite:///{TEST_DB_PATH}"

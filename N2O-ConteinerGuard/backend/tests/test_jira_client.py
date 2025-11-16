@@ -3,7 +3,7 @@ from __future__ import annotations
 import httpx
 import pytest
 
-from app.integrations.jira_client import DummyJiraClient, JiraClient
+from backend.app.integrations.jira_client import DummyJiraClient, JiraClient
 
 
 @pytest.mark.asyncio

@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections import defaultdict
 from typing import Iterable
 
-from app.domain.models import AnalysisResult, EvaluationRequest, Vulnerability
+from backend.app.domain.models import AnalysisResult, EvaluationRequest, Vulnerability
 
 SEVERITY_ORDER = {
     "CRITICAL": 0,
@@ -42,7 +42,9 @@ def build_jira_description(request: EvaluationRequest, analysis: AnalysisResult)
     return "\n".join(sections)
 
 
-def _group_by_severity(vulnerabilities: Iterable[Vulnerability]) -> dict[str, list[Vulnerability]]:
+def _group_by_severity(
+    vulnerabilities: Iterable[Vulnerability],
+) -> dict[str, list[Vulnerability]]:
     grouped: dict[str, list[Vulnerability]] = defaultdict(list)
     for vulnerability in vulnerabilities:
         grouped[vulnerability.severity].append(vulnerability)

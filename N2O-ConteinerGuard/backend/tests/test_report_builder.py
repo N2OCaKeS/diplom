@@ -1,7 +1,13 @@
 from __future__ import annotations
 
-from app.domain.models import AnalysisResult, Decision, EvaluationRequest, Status, Vulnerability
-from app.domain.report_builder import build_jira_description
+from backend.app.domain.models import (
+    AnalysisResult,
+    Decision,
+    EvaluationRequest,
+    Status,
+    Vulnerability,
+)
+from backend.app.domain.report_builder import build_jira_description
 
 
 def test_report_builder_groups_by_severity() -> None:
@@ -17,8 +23,20 @@ def test_report_builder_groups_by_severity() -> None:
         status=Status.MEDIUM,
         message="Vulnerabilities require attention",
         vulnerabilities=[
-            Vulnerability(id="CVE-1", severity="HIGH", package="openssl", fixed_version=None, recommendation="Update"),
-            Vulnerability(id="CVE-2", severity="LOW", package="glibc", fixed_version="1.2", recommendation=None),
+            Vulnerability(
+                id="CVE-1",
+                severity="HIGH",
+                package="openssl",
+                fixed_version=None,
+                recommendation="Update",
+            ),
+            Vulnerability(
+                id="CVE-2",
+                severity="LOW",
+                package="glibc",
+                fixed_version="1.2",
+                recommendation=None,
+            ),
         ],
     )
 

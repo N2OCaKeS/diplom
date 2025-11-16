@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from app.core.config import PolicyConfig, PolicySettings
-from app.domain.analyzer import Analyzer
-from app.domain.models import Decision, Status
+from backend.app.core.config import PolicyConfig, PolicySettings
+from backend.app.domain.analyzer import Analyzer
+from backend.app.domain.models import Decision, Status
 
 
 def make_report(severity: str, fixed_version: str | None = "1.0.1") -> dict:
@@ -34,7 +34,9 @@ def test_analyzer_blocks_on_severity() -> None:
 
 
 def test_analyzer_blocks_unfixed_when_policy_disallows() -> None:
-    policies = PolicyConfig(default=PolicySettings(block_on_severity="HIGH", allow_unfixed=False))
+    policies = PolicyConfig(
+        default=PolicySettings(block_on_severity="HIGH", allow_unfixed=False)
+    )
     analyzer = Analyzer(policies)
 
     result = analyzer.evaluate("service", make_report("HIGH", fixed_version=None))
@@ -45,7 +47,9 @@ def test_analyzer_blocks_unfixed_when_policy_disallows() -> None:
 
 
 def test_analyzer_warns_on_medium() -> None:
-    policies = PolicyConfig(default=PolicySettings(block_on_severity="CRITICAL", warn_on_severity="MEDIUM"))
+    policies = PolicyConfig(
+        default=PolicySettings(block_on_severity="CRITICAL", warn_on_severity="MEDIUM")
+    )
     analyzer = Analyzer(policies)
 
     result = analyzer.evaluate("service", make_report("MEDIUM"))

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from fastapi import FastAPI
 
-from app.api.v1.evaluate import router as evaluate_router
+from backend.app.api.v1.evaluate import router as evaluate_router
 
 app = FastAPI(title="N2O ContainerGuard")
 

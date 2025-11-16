@@ -6,8 +6,8 @@ from datetime import datetime
 from sqlalchemy import JSON, Column, DateTime, Enum, String
 from sqlalchemy.dialects.postgresql import UUID
 
-from app.db.base import Base
-from app.domain.models import Decision, Status
+from backend.app.db.base import Base
+from backend.app.domain.models import Decision, Status
 
 
 class ReportORM(Base):

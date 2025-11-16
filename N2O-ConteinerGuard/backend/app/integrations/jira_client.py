@@ -4,17 +4,21 @@ from typing import Any
 
 import httpx
 
-from app.core.config import Settings, get_settings
-from app.domain.models import JiraIssue
+from backend.app.core.config import Settings, get_settings
+from backend.app.domain.models import JiraIssue
 
 
 class JiraClient:
-    def __init__(self, base_url: str, user: str, api_token: str, project_key: str) -> None:
+    def __init__(
+        self, base_url: str, user: str, api_token: str, project_key: str
+    ) -> None:
         self.base_url = base_url.rstrip("/")
         self.user = user
         self.api_token = api_token
         self.project_key = project_key
-        self._client = httpx.AsyncClient(base_url=self.base_url, auth=(self.user, self.api_token))
+        self._client = httpx.AsyncClient(
+            base_url=self.base_url, auth=(self.user, self.api_token)
+        )
 
     async def create_issue(self, summary: str, description: str) -> JiraIssue:
         payload = {
@@ -38,7 +42,14 @@ class JiraClient:
     @classmethod
     def from_settings(cls, settings: Settings | None = None) -> "JiraClient":
         settings = settings or get_settings()
-        if not all([settings.jira_url, settings.jira_user, settings.jira_api_token, settings.jira_project_key]):
+        if not all(
+            [
+                settings.jira_url,
+                settings.jira_user,
+                settings.jira_api_token,
+                settings.jira_project_key,
+            ]
+        ):
             # Return a dummy client that mimics Jira responses without network calls.
             return DummyJiraClient()
         return cls(
@@ -54,7 +65,9 @@ class DummyJiraClient(JiraClient):
         self.base_url = "https://jira.example.com"
         self.project_key = "SEC"
 
-    async def create_issue(self, summary: str, description: str) -> JiraIssue:  # noqa: ARG002
+    async def create_issue(
+        self, summary: str, description: str
+    ) -> JiraIssue:  # noqa: ARG002
         return JiraIssue(key="SEC-000", url=f"{self.base_url}/browse/SEC-000")
 
     async def close(self) -> None:

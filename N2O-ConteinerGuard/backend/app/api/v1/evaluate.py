@@ -3,14 +3,18 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import get_settings
-from app.core.security import SecurityDependency
-from app.db.repositories import ReportRepository
-from app.db.session import get_session
-from app.domain.analyzer import Analyzer
-from app.domain.models import AnalysisResult, EvaluationRequest, EvaluationResponse
-from app.domain.report_builder import build_jira_description
-from app.integrations.jira_client import JiraClient
+from backend.app.core.config import get_settings
+from backend.app.core.security import SecurityDependency
+from backend.app.db.repositories import ReportRepository
+from backend.app.db.session import get_session
+from backend.app.domain.analyzer import Analyzer
+from backend.app.domain.models import (
+    AnalysisResult,
+    EvaluationRequest,
+    EvaluationResponse,
+)
+from backend.app.domain.report_builder import build_jira_description
+from backend.app.integrations.jira_client import JiraClient
 
 router = APIRouter(tags=["evaluation"])
 

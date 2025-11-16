@@ -7,7 +7,7 @@ on:
     branches: [dev]
 
 env:
-  WORKDIR: N2O-ConteinerGuard
+  WORKDIR: N2O-ConteinerGuard/backend
   PY_VER: "3.12"
   POETRY_VER: "2.2.1"
 
@@ -64,7 +64,6 @@ jobs:
           - name: e2e
             pattern: tests/e2e/**/*.py
             pytest_args: -q
-          # временно, чтобы покрыть твой текущий tests/test_health.py
           - name: general
             pattern: tests/*.py
             pytest_args: -q
