@@ -68,3 +68,65 @@ def test_analyzer_handles_no_vulnerabilities() -> None:
     assert result.status is Status.PASS
     assert result.decision is Decision.ALLOW
     assert result.message == "No vulnerabilities detected"
+
+
+def test_analyzer_uses_project_specific_policy() -> None:
+    policies = PolicyConfig(
+        default=PolicySettings(block_on_severity="CRITICAL"),
+        projects={"critical-app": PolicySettings(block_on_severity="MEDIUM")},
+    )
+    analyzer = Analyzer(policies)
+
+    result = analyzer.evaluate("critical-app", make_report("MEDIUM"))
+
+    assert result.status is Status.HIGH
+    assert result.decision is Decision.DENY
+    assert result.message == "Blocking vulnerability threshold reached"
+
+
+def test_analyzer_treats_unknown_severity_using_policy() -> None:
+    policies = PolicyConfig(
+        default=PolicySettings(
+            block_on_severity="CRITICAL",
+            warn_on_severity="MEDIUM",
+            treat_unknown_as="medium",
+        )
+    )
+    analyzer = Analyzer(policies)
+    report = {
+        "Results": [
+            {
+                "Vulnerabilities": [
+                    {
+                        "VulnerabilityID": "CVE-001",
+                        "Severity": None,
+                        "PrimaryURL": "https://cve.example.com",
+                        "PkgName": "libc",
+                    }
+                ]
+            }
+        ]
+    }
+
+    result = analyzer.evaluate("service", report)
+
+    assert result.status is Status.MEDIUM
+    assert result.decision is Decision.ALLOW
+    assert result.message == "Vulnerabilities require attention"
+    assert result.vulnerabilities[0].url == "https://cve.example.com"
+
+
+def test_analyzer_reports_low_severity_warning() -> None:
+    policies = PolicyConfig(
+        default=PolicySettings(
+            block_on_severity="CRITICAL",
+            warn_on_severity="HIGH",
+        )
+    )
+    analyzer = Analyzer(policies)
+
+    result = analyzer.evaluate("service", make_report("LOW"))
+
+    assert result.status is Status.WARN
+    assert result.decision is Decision.ALLOW
+    assert result.message == "Low severity vulnerabilities present"
