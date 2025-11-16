@@ -18,8 +18,22 @@ class ReportORM(Base):
     commit = Column(String(128), nullable=False)
     project = Column(String(128), nullable=False)
     pipeline_id = Column(String(128), nullable=False)
-    decision = Column(Enum(Decision), nullable=False)
-    status = Column(Enum(Status), nullable=False)
+    decision = Column(
+        Enum(
+            Decision,
+            values_callable=lambda enum_cls: [member.value for member in enum_cls],
+            name="decision",
+        ),
+        nullable=False,
+    )
+    status = Column(
+        Enum(
+            Status,
+            values_callable=lambda enum_cls: [member.value for member in enum_cls],
+            name="status",
+        ),
+        nullable=False,
+    )
     message = Column(String(512), nullable=False)
     report = Column(JSON, nullable=False)
     jira_issue_key = Column(String(64), nullable=False)
