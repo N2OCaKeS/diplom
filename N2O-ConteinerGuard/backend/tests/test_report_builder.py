@@ -45,7 +45,11 @@ def test_report_builder_groups_by_severity() -> None:
     assert "h3. HIGH (1)" in description
     assert "h3. LOW (1)" in description
     assert "CVE-2" in description
-    assert "See scanner details" in description
+    assert "Проверьте детали отчета сканера" in description
+    assert (
+        "|| Идентификатор || Пакет || Рекомендуемая версия || Ссылка || Рекомендации ||"
+        in description
+    )
 
 
 def test_report_builder_handles_empty_vulnerabilities() -> None:
@@ -65,4 +69,4 @@ def test_report_builder_handles_empty_vulnerabilities() -> None:
 
     description = build_jira_description(request, analysis)
 
-    assert "No vulnerabilities were reported" in description
+    assert "Сканер не сообщил об уязвимостях" in description

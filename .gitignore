@@ -8,3 +8,6 @@ htmlcov/
 app/static/out/raw/*
 app/static/out/normalized/*
 app/static/out/html/*
+request.py
+trivy.json
+trivy_scan.py
