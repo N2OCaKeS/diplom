@@ -7,7 +7,7 @@ on:
     branches: [dev]
 
 env:
-  WORKDIR: N2O-ConteinerGuard/backend
+  WORKDIR: N2O-ConteinerGuard
   PY_VER: "3.12"
   POETRY_VER: "2.2.1"
 
@@ -44,30 +44,11 @@ jobs:
 
       - name: Ruff
         working-directory: ${{ env.WORKDIR }}
-        run: |
-          export PYTHONPATH="$PYTHONPATH:${{ env.WORKDIR }}"
-          poetry run ruff check app tests
+        run: poetry run ruff check backend/app backend/tests
 
   tests:
     runs-on: ubuntu-latest
     needs: lint
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: unit
-            pattern: tests/unit/**/*.py
-            pytest_args: -q
-          - name: integration
-            pattern: tests/integration/**/*.py
-            pytest_args: -q
-          - name: e2e
-            pattern: tests/e2e/**/*.py
-            pytest_args: -q
-          - name: general
-            pattern: tests/*.py
-            pytest_args: -q
-    name: tests (${{ matrix.name }})
     steps:
       - uses: actions/checkout@v4
 
@@ -96,30 +77,6 @@ jobs:
           poetry --version
           poetry install --no-interaction --no-root --sync
 
-      - name: Detect test files
-        id: detect
-        shell: bash
-        run: |
-          shopt -s nullglob globstar
-          # Надёжнее, чем голое расширение globs:
-          mapfile -t files < <(compgen -G "${{ matrix.pattern }}" || true)
-          echo "Matched: ${#files[@]}"
-          if (( ${#files[@]} > 0 )); then
-            echo "found=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "found=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Run pytest (${{ matrix.name }})
-        if: steps.detect.outputs.found == 'true'
-        shell: bash
+      - name: Run pytest
         working-directory: ${{ env.WORKDIR }}
-        run: |
-          export PYTHONPATH="$PYTHONPATH:${{ env.WORKDIR }}"
-          poetry run pytest ${{ matrix.pytest_args }} ${{ matrix.pattern }}
-
-      - name: Skip (no tests)
-        if: steps.detect.outputs.found != 'true'
-        shell: bash
-        run: |
-          echo "Skipping ${{ matrix.name }} tests: no files matched '${{ matrix.pattern }}'."
+        run: poetry run pytest backend/tests -q
