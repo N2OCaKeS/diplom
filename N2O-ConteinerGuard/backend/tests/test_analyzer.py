@@ -90,6 +90,7 @@ def test_analyzer_treats_unknown_severity_using_policy() -> None:
             block_on_severity="CRITICAL",
             warn_on_severity="MEDIUM",
             treat_unknown_as="medium",
+            allow_unfixed=True,
         )
     )
     analyzer = Analyzer(policies)
