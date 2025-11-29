@@ -1,0 +1,11 @@
+default:
+  block_on_severity: CRITICAL
+  warn_on_severity: LOW
+  allow_unfixed: true
+  treat_unknown_as: MEDIUM
+
+projects:
+  legacy-services:
+    block_on_severity: CRITICAL
+    warn_on_severity: CRITICAL
+    allow_unfixed: true

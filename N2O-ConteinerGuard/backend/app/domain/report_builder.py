@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from collections import defaultdict
+from collections import Counter, defaultdict
+from html import escape
 from typing import Iterable
 
 from backend.app.domain.models import AnalysisResult, EvaluationRequest, Vulnerability
@@ -14,44 +15,106 @@ SEVERITY_ORDER = {
 }
 
 
-def build_jira_description(request: EvaluationRequest, analysis: AnalysisResult) -> str:
-    header = (
-        f"*Контейнерное изображение:* `{request.image}`\n"
-        f"*Проект:* `{request.project}`\n"
-        f"*ID пайплайна:* `{request.pipeline_id}`\n"
-        f"*Коммит:* `{request.commit}`\n"
-        f"*Решение:* {analysis.decision.value}\n"
-        f"*Статус:* {analysis.status.value}\n"
-        f"*Комментарий:* {analysis.message}\n\n"
-    )
-
-    if not analysis.vulnerabilities:
-        return header + "Сканер не сообщил об уязвимостях."
-
-    grouped = _group_by_severity(analysis.vulnerabilities)
-    sections = [
-        header,
-        "Ниже приведены уязвимости, обнаруженные Trivy (отсортированы по уровню риска):",
+def build_jira_description(
+    request: EvaluationRequest,
+    analysis: AnalysisResult,
+    report_url: str,
+) -> str:
+    header = [
+        f"*Image:* `{request.image}`",
+        f"*Project:* `{request.project}`",
+        f"*Pipeline ID:* `{request.pipeline_id}`",
+        f"*Commit:* `{request.commit}`",
+        f"*Decision:* {analysis.decision.value}",
+        f"*Status:* {analysis.status.value}",
+        f"*Message:* {analysis.message}",
         "",
     ]
-    for severity, vulns in grouped.items():
-        sections.append(f"h3. {severity} ({len(vulns)})")
-        sections.append(
-            "|| Идентификатор || Пакет || Рекомендуемая версия || Ссылка || Рекомендации ||"
-        )
-        for vuln in vulns:
-            recommendation = _format_recommendation(vuln)
-            link = f"[Подробнее|{vuln.url}]" if vuln.url else "-"
-            sections.append(
-                "| "
-                f"{vuln.id} | "
-                f"{vuln.package or '-'} | "
-                f"{vuln.fixed_version or 'нет данных'} | "
-                f"{link} | "
-                f"{recommendation} |"
-            )
-        sections.append("")
+
+    if not analysis.vulnerabilities:
+        header.append("No vulnerabilities detected in the latest scan.")
+        header.append(f"[Detailed report in Confluence|{report_url}]")
+        return "\n".join(header)
+
+    header.append("*Vulnerability summary:*")
+    counts = _count_by_severity(analysis.vulnerabilities)
+    for severity in SEVERITY_ORDER:
+        header.append(f"- {severity}: {counts.get(severity, 0)}")
+    additional = sorted(
+        severity for severity in counts if severity not in SEVERITY_ORDER
+    )
+    for severity in additional:
+        header.append(f"- {severity}: {counts.get(severity, 0)}")
+    header.append("")
+    header.append(f"[Detailed report in Confluence|{report_url}]")
+    return "\n".join(header)
+
+
+def build_confluence_report(
+    request: EvaluationRequest, analysis: AnalysisResult
+) -> str:
+    sections: list[str] = [
+        "<p><strong>Container image:</strong> "
+        f"{escape(request.image)}<br/>"
+        f"<strong>Project:</strong> {escape(request.project)}<br/>"
+        f"<strong>Pipeline ID:</strong> {escape(request.pipeline_id)}<br/>"
+        f"<strong>Commit:</strong> {escape(request.commit)}<br/>"
+        f"<strong>Decision:</strong> {escape(analysis.decision.value)}<br/>"
+        f"<strong>Status:</strong> {escape(analysis.status.value)}<br/>"
+        f"<strong>Message:</strong> {escape(analysis.message)}</p>"
+    ]
+
+    if not analysis.vulnerabilities:
+        sections.append("<p>No vulnerabilities detected in this analysis.</p>")
+        return "\n".join(sections)
+
+    grouped = _group_by_severity(analysis.vulnerabilities)
+    for severity, vulnerabilities in grouped.items():
+        sections.append(f"<h3>{escape(severity)} ({len(vulnerabilities)})</h3>")
+        sections.append(_render_severity_table(vulnerabilities))
     return "\n".join(sections)
+
+
+def _render_severity_table(vulnerabilities: Iterable[Vulnerability]) -> str:
+    rows = [
+        "<table>",
+        "<thead>",
+        "<tr>"
+        "<th>ID</th>"
+        "<th>Package</th>"
+        "<th>Fixed Version</th>"
+        "<th>Link</th>"
+        "<th>Recommendation</th>"
+        "</tr>",
+        "</thead>",
+        "<tbody>",
+    ]
+    for vulnerability in vulnerabilities:
+        rows.append(
+            "<tr>"
+            f"<td>{escape(vulnerability.id or '-')}</td>"
+            f"<td>{escape(vulnerability.package or '-')}</td>"
+            f"<td>{escape(vulnerability.fixed_version or 'Not provided')}</td>"
+            f"<td>{_render_link(vulnerability.url)}</td>"
+            f"<td>{_format_recommendation(vulnerability)}</td>"
+            "</tr>"
+        )
+    rows.extend(["</tbody>", "</table>"])
+    return "\n".join(rows)
+
+
+def _render_link(url: str | None) -> str:
+    if not url:
+        return "-"
+    safe_url = escape(url, quote=True)
+    return f'<a href="{safe_url}">Advisory</a>'
+
+
+def _count_by_severity(vulnerabilities: Iterable[Vulnerability]) -> Counter[str]:
+    counts: Counter[str] = Counter()
+    for vulnerability in vulnerabilities:
+        counts[vulnerability.severity] += 1
+    return counts
 
 
 def _group_by_severity(
@@ -69,13 +132,10 @@ def _group_by_severity(
 
 
 def _format_recommendation(vulnerability: Vulnerability) -> str:
-    base_recommendation = (
-        vulnerability.recommendation
-        or "Проверьте детали отчета сканера или рекомендации поставщика"
+    recommendation = vulnerability.recommendation or (
+        "Review the vendor advisory and apply the recommended remediation steps."
     )
     if vulnerability.fixed_version:
-        return (
-            f"{base_recommendation}. "
-            f"Обновите пакет до версии {vulnerability.fixed_version} или выше."
-        )
-    return f"{base_recommendation}. Исправленная версия не указана."
+        recommendation = f"{recommendation} Update to {escape(vulnerability.fixed_version)} when possible."
+    safe_recommendation = escape(recommendation)
+    return safe_recommendation.replace("\n", "<br/>")

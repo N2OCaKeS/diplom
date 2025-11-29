@@ -11,6 +11,7 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/guard
       POLICIES_PATH: /app/policies.yml
+      POLICIES_STORAGE_PATH: /app/policies_storage
     ports:
       - "${APP_PORT:-8001}:${APP_PORT:-8001}"
     depends_on:

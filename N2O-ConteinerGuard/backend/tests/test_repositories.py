@@ -47,7 +47,7 @@ def test_report_repository_persists_with_sync_session(session) -> None:
             request=_make_request(),
             analysis=_make_analysis(),
             jira_issue_key="SEC-101",
-            recommendations_url="https://jira.example.com/browse/SEC-101",
+            recommendations_url="https://confluence.example.com/pages/SEC-101",
         )
     )
 
@@ -72,7 +72,7 @@ async def test_report_repository_handles_async_session() -> None:
                 request=_make_request(),
                 analysis=_make_analysis(),
                 jira_issue_key="SEC-202",
-                recommendations_url="https://jira.example.com/browse/SEC-202",
+                recommendations_url="https://confluence.example.com/pages/SEC-202",
             )
 
             result = await db_session.execute(select(ReportORM))

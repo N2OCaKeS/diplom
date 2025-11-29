@@ -60,3 +60,9 @@ class AnalysisResult:
 class JiraIssue:
     key: str
     url: str
+
+
+@dataclass(slots=True)
+class ConfluencePage:
+    id: str
+    url: str

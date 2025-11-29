@@ -1,0 +1,11 @@
+default:
+  block_on_severity: HIGH
+  warn_on_severity: MEDIUM
+  allow_unfixed: false
+  treat_unknown_as: CRITICAL
+
+projects:
+  critical-app:
+    block_on_severity: MEDIUM
+    warn_on_severity: LOW
+    allow_unfixed: false

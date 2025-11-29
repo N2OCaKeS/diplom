@@ -3,7 +3,9 @@ from __future__ import annotations
 import pytest
 from sqlalchemy import select
 
+from backend.app.api.v1.evaluate import _build_confluence_title
 from backend.app.db.models import ReportORM
+from backend.app.domain.models import EvaluationRequest
 
 
 def build_payload(severity: str, fixed_version: str | None = "1.0.0") -> dict:
@@ -50,7 +52,7 @@ def test_evaluate_allows_deployment(
     assert data["decision"] == "allow"
     assert data["status"] == "warn"
     assert data["jira_issue_key"] == "SEC-000"
-    assert data["recommendations_url"].startswith("https://jira.test/browse/")
+    assert data["recommendations_url"].startswith("https://confluence.test/wiki/pages/")
 
     result = session.execute(select(ReportORM))
     stored = result.scalar_one()
@@ -92,3 +94,26 @@ def test_evaluate_requires_jira_configuration(
 
     assert response.status_code == 500
     assert response.json()["detail"] == "Jira URL must be configured"
+
+
+def test_evaluate_requires_confluence_configuration(
+    monkeypatch: pytest.MonkeyPatch, client
+) -> None:
+    monkeypatch.setenv("CONFLUENCE_URL", "")
+    monkeypatch.setenv("AUTH_MODE", "token")
+    monkeypatch.setenv("GUARD_TOKEN", "secret")
+
+    response = client.post(
+        "/api/v1/evaluate",
+        json=build_payload("LOW"),
+        headers=auth_headers(),
+    )
+
+    assert response.status_code == 500
+    assert response.json()["detail"] == "Confluence URL must be configured"
+
+
+def test_build_confluence_title_sanitizes_components() -> None:
+    request = EvaluationRequest(**build_payload("LOW"))
+    title = _build_confluence_title(request)
+    assert title == "Report_registry_example_com_project_app_sha_abcdef_42"

@@ -1,0 +1,4 @@
+projects:
+  example-service:
+    block_on_severity: HIGH
+    warn_on_severity: MEDIUM

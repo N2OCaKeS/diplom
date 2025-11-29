@@ -32,6 +32,7 @@ WORKDIR /app
 COPY --from=builder /usr/local /usr/local
 COPY backend ./backend
 COPY backend/policies.yml ./policies.yml
+COPY backend/policies_storage ./policies_storage
 COPY guincorn.py ./guincorn.py
 
 EXPOSE 8001

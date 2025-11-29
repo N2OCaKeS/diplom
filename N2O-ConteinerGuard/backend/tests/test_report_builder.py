@@ -7,18 +7,24 @@ from backend.app.domain.models import (
     Status,
     Vulnerability,
 )
-from backend.app.domain.report_builder import build_jira_description
+from backend.app.domain.report_builder import (
+    build_confluence_report,
+    build_jira_description,
+)
 
 
-def test_report_builder_groups_by_severity() -> None:
-    request = EvaluationRequest(
+def _make_request() -> EvaluationRequest:
+    return EvaluationRequest(
         image="registry.example.com/project/app:tag",
         commit="abcdef",
         project="sample",
         pipeline_id="99",
         report={},
     )
-    analysis = AnalysisResult(
+
+
+def _make_analysis() -> AnalysisResult:
+    return AnalysisResult(
         decision=Decision.ALLOW,
         status=Status.MEDIUM,
         message="Vulnerabilities require attention",
@@ -28,6 +34,7 @@ def test_report_builder_groups_by_severity() -> None:
                 severity="HIGH",
                 package="openssl",
                 fixed_version=None,
+                url="https://cve.example.com/CVE-1",
                 recommendation="Update",
             ),
             Vulnerability(
@@ -40,33 +47,34 @@ def test_report_builder_groups_by_severity() -> None:
         ],
     )
 
-    description = build_jira_description(request, analysis)
 
-    assert "h3. HIGH (1)" in description
-    assert "h3. LOW (1)" in description
-    assert "CVE-2" in description
-    assert "Проверьте детали отчета сканера" in description
-    assert (
-        "|| Идентификатор || Пакет || Рекомендуемая версия || Ссылка || Рекомендации ||"
-        in description
+def test_jira_description_lists_summary_and_link() -> None:
+    description = build_jira_description(
+        _make_request(), _make_analysis(), "https://confluence.test/pages/SEC-1"
     )
 
+    assert "*Vulnerability summary:*" in description
+    assert "- HIGH: 1" in description
+    assert "- LOW: 1" in description
+    assert "Detailed report in Confluence" in description
 
-def test_report_builder_handles_empty_vulnerabilities() -> None:
-    request = EvaluationRequest(
-        image="registry.example.com/project/app:tag",
-        commit="abcdef",
-        project="sample",
-        pipeline_id="99",
-        report={},
-    )
-    analysis = AnalysisResult(
+
+def test_confluence_report_contains_table() -> None:
+    report = build_confluence_report(_make_request(), _make_analysis())
+
+    assert "<table>" in report
+    assert "<th>ID</th>" in report
+    assert "CVE-1" in report
+    assert "Advisory" in report
+
+
+def test_confluence_report_without_vulnerabilities() -> None:
+    empty_analysis = AnalysisResult(
         decision=Decision.ALLOW,
         status=Status.PASS,
         message="No vulnerabilities detected",
         vulnerabilities=[],
     )
 
-    description = build_jira_description(request, analysis)
-
-    assert "Сканер не сообщил об уязвимостях" in description
+    report = build_confluence_report(_make_request(), empty_analysis)
+    assert "No vulnerabilities detected" in report

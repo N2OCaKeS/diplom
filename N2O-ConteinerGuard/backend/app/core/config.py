@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterable
 
 import yaml
 from pydantic import BaseModel, Field
@@ -58,21 +58,94 @@ class Settings(BaseSettings):
     jira_api_token: str | None = None
     jira_project_key: str | None = None
 
+    confluence_url: str | None = None
+    confluence_user: str | None = None
+    confluence_api_token: str | None = None
+    confluence_space_key: str | None = None
+    confluence_parent_page_id: str | None = None
+
     policies_path: Path = Field(default=Path("policies.yml"))
+    policies_storage_path: Path | None = Field(default=None)
+    policy_templates_path: Path = Field(
+        default=Path(__file__).resolve().parents[2] / "policy_templates"
+    )
 
     policies: PolicyConfig = Field(default_factory=PolicyConfig)
+    policy_sources: tuple[str, ...] = Field(default_factory=tuple)
 
     def model_post_init(self, __context: Any) -> None:
         self.policies = self._load_policies()
 
     def _load_policies(self) -> PolicyConfig:
-        if not self.policies_path.exists():
-            return PolicyConfig()
-        with self.policies_path.open("r", encoding="utf-8") as file:
-            data = yaml.safe_load(file) or {}
-        return PolicyConfig.from_dict(data)
+        loader = PolicyLoader(self.policies_path, self.policies_storage_path)
+        config, sources = loader.load()
+        return self.apply_policy_config(config, sources)
+
+    def reload_policies(self) -> PolicyConfig:
+        self.policies = self._load_policies()
+        return self.policies
+
+    def apply_policy_config(
+        self, config: PolicyConfig, sources: Iterable[str | Path]
+    ) -> PolicyConfig:
+        self.policies = config
+        self.policy_sources = tuple(str(source) for source in sources)
+        return self.policies
 
 
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
+
+
+class PolicyLoader:
+    def __init__(self, file_path: Path, storage_path: Path | None) -> None:
+        self._file_path = file_path
+        self._storage_path = storage_path
+
+    def load(self) -> tuple[PolicyConfig, list[Path]]:
+        sources = self._collect_sources()
+        if not sources:
+            return PolicyConfig(), []
+        merged = self._merge_sources(sources)
+        return PolicyConfig.from_dict(merged), sources
+
+    def _collect_sources(self) -> list[Path]:
+        files: list[Path] = []
+        storage = self._storage_path
+        if storage:
+            storage_path = storage
+            if storage_path.exists():
+                files = self._find_storage_files(storage_path)
+        if not files and self._file_path and self._file_path.exists():
+            files = [self._file_path.resolve()]
+        return files
+
+    def _find_storage_files(self, storage: Path) -> list[Path]:
+        candidates: list[Path] = []
+        for pattern in ("*.yml", "*.yaml"):
+            candidates.extend(storage.rglob(pattern))
+        unique_candidates = sorted(
+            {path.resolve() for path in candidates if path.is_file()}
+        )
+        return unique_candidates
+
+    def _merge_sources(self, paths: Iterable[Path]) -> dict[str, Any]:
+        merged_default: dict[str, Any] = {}
+        merged_projects: dict[str, dict[str, Any]] = {}
+        for path in paths:
+            with path.open("r", encoding="utf-8") as file:
+                data = yaml.safe_load(file) or {}
+            if not isinstance(data, dict):
+                continue
+            default_data = data.get("default") or {}
+            if isinstance(default_data, dict):
+                merged_default.update(default_data)
+            projects_data = data.get("projects") or {}
+            if isinstance(projects_data, dict):
+                for name, values in projects_data.items():
+                    if not isinstance(values, dict):
+                        continue
+                    project = merged_projects.setdefault(name, {})
+                    project.update(values)
+        return {"default": merged_default, "projects": merged_projects}

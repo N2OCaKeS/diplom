@@ -3,10 +3,12 @@ from __future__ import annotations
 from fastapi import FastAPI
 
 from backend.app.api.v1.evaluate import router as evaluate_router
+from backend.app.api.v1.policies import router as policies_router
 
 app = FastAPI(title="N2O ContainerGuard")
 
 app.include_router(evaluate_router, prefix="/api/v1")
+app.include_router(policies_router, prefix="/api/v1")
 
 
 @app.get("/health", tags=["health"])  # type: ignore[misc]
